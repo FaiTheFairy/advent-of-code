@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 
-pub fn extract_input_file(filename: &str) -> io::Result<Vec<TurnDial>> {
+pub fn extract_input_file<P: AsRef<Path>>(filename: P) -> io::Result<Vec<TurnDial>> {
     let lines = read_lines(filename)?;
     lines.map(|line| line.map(parse_turn)).collect()
 }
