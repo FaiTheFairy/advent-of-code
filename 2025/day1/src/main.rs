@@ -20,18 +20,5 @@ fn main() {
     for turn in dial_turns {
         dial.turn(turn);
     }
-    // let turn1 = TurnDial {
-    //     direction: Direction::Right,
-    //     increment: 10,
-    // };
-
-    // let turn2 = TurnDial {
-    //     direction: Direction::Left,
-    //     increment: 40,
-    // };
-
-    // dial.turn(turn1);
-    // dial.turn(turn2);
-
     println!("{:?}", dial);
 }
