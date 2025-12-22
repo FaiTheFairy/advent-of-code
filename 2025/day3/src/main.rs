@@ -1,5 +1,10 @@
 use std::io::{BufRead, BufReader};
 
+// The batteries are arranged into banks; each line of digits in your input corresponds to a single bank of batteries.
+// Within each bank, you need to turn on exactly two batteries; the joltage that the bank produces is equal to the
+// number formed by the digits on the batteries you've turned on. For example, if you have a bank like 12345 and you
+// turn on batteries 2 and 4, the bank would produce 24 jolts. (You cannot rearrange batteries.)
+// You'll need to find the largest possible joltage each bank can produce.
 fn largest_two_digit_number(line: &str) -> u8 {
     let digits: Vec<u8> = line
         .chars()
@@ -35,7 +40,7 @@ fn largest_k_digit_subsequence(line: &str, k: usize) -> Option<u128> {
     for d in digits {
         let digit = d as u128;
 
-        // update from high -> low so each input digit is used at most once
+        // update from high to low so each input digit is used at most once
         for len in (1..=k).rev() {
             let Some(prev) = best[len - 1] else {
                 continue;
