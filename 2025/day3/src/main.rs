@@ -1,10 +1,14 @@
-use std::io::{BufRead, BufReader};
+use std::{
+    io::{BufRead, BufReader},
+    path::PathBuf,
+};
 
 // The batteries are arranged into banks; each line of digits in your input corresponds to a single bank of batteries.
 // Within each bank, you need to turn on exactly two batteries; the joltage that the bank produces is equal to the
 // number formed by the digits on the batteries you've turned on. For example, if you have a bank like 12345 and you
 // turn on batteries 2 and 4, the bank would produce 24 jolts. (You cannot rearrange batteries.)
 // You'll need to find the largest possible joltage each bank can produce.
+#[allow(dead_code)]
 fn largest_two_digit_number(line: &str) -> u8 {
     let digits: Vec<u8> = line
         .chars()
@@ -64,14 +68,15 @@ fn largest_twelve_digit_subsequence(line: &str) -> Option<u128> {
 
 fn main() {
     let mut joltage: Vec<u128> = vec![];
-    let file = std::fs::File::open("input.txt").unwrap();
+    let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
+    let file = std::fs::File::open(filename).unwrap();
     let reader = BufReader::new(file);
     for line in reader.lines() {
         joltage.push(largest_twelve_digit_subsequence(&line.unwrap()).unwrap());
     }
     let mut sum = 0u128;
     for value in joltage {
-        sum += value as u128;
+        sum += value;
     }
     println!("{}", sum);
 }

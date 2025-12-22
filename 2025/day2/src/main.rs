@@ -43,11 +43,11 @@ fn extract_invalid_ids_repeated_twice_or_more(ids: Vec<u64>) -> Vec<u64> {
 fn digits_repeated_exactly_twice(id: u64) -> bool {
     let id_str = id.to_string();
     let len = id_str.chars().count();
-    if len % 2 != 0 {
+    if !len.is_multiple_of(2) {
         return false;
     }
     let (first, last) = id_str.split_at(len / 2);
-    if first == last { true } else { false }
+    first == last
 }
 
 pub fn digits_repeated_at_least_twice(id: u64) -> bool {
@@ -56,7 +56,7 @@ pub fn digits_repeated_at_least_twice(id: u64) -> bool {
 
     // Must repeat at least twice, so period must be <= n/2
     for period in 1..=len / 2 {
-        if len % period != 0 {
+        if !len.is_multiple_of(period) {
             continue;
         }
         let number_of_repeats = len / period;
