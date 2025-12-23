@@ -1,45 +1,47 @@
 use std::{
-    collections::HashSet,
+    // collections::HashSet,
     fs::{self},
     path::PathBuf,
 };
 
-fn parse_input(input: &str) -> (HashSet<usize>, HashSet<usize>) {
-    let mut fresh_ingredients: HashSet<usize> = HashSet::new();
-    let mut available_ingredients: HashSet<usize> = HashSet::new();
+fn parse_input(input: &str) -> (Vec<(usize, usize)>, Vec<usize>) {
+    let mut fresh_ingredients_ranges: Vec<(usize, usize)> = vec![];
+    let mut available_ingredients: Vec<usize> = vec![];
     let (fresh_ids, available_ids) = input.split_once("\n\n").unwrap();
     for line in fresh_ids.lines() {
         let (first, last) = line.split_once('-').unwrap();
         let first: usize = first.parse().unwrap();
         let last: usize = last.parse().unwrap();
-        for i in first..=last {
-            // if !fresh_ingredients.contains(&i) {
-            // fresh_ingredients.push(i);
-            fresh_ingredients.insert(i);
-            // }
-        }
+        fresh_ingredients_ranges.push((first, last));
     }
     for line in available_ids.lines() {
-        available_ingredients.insert(line.parse().unwrap());
+        available_ingredients.push(line.parse().unwrap());
     }
 
-    (fresh_ingredients, available_ingredients)
+    (fresh_ingredients_ranges, available_ingredients)
 }
 
 fn main() {
-    // let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input1.txt");
-    let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
+    let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input1.txt");
+    // let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
     let input = fs::read_to_string(filename).unwrap();
-    let (fresh, available) = parse_input(&input);
-    println!("Fresh: {fresh:?}");
-    println!("Available: {available:?}");
+    let (fresh_ranges, available_ids) = parse_input(&input);
+    println!("Fresh: {fresh_ranges:?}");
+    println!("Available: {available_ids:?}");
     // let mut count_fresh_available: usize = 0;
     // for ingredient in available {
     //     if fresh.contains(&ingredient) {
     //         count_fresh_available += 1;
     //     }
     // }
-    let count_fresh_available: usize = available.intersection(&fresh).count();
+    let mut count_fresh_available: usize = 0;
+
+    for id in available_ids {
+        if fresh_ranges.iter().any(|(a, b)| (a..=b).contains(&&id)) {
+            count_fresh_available += 1;
+        }
+    }
+    // let count_fresh_available: usize = available_ids.intersection(&fresh_ranges).count();
     println!("Number of available ingredient IDs that are fresh = {count_fresh_available}");
 }
 
