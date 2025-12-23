@@ -47,6 +47,17 @@ fn count_accessible_rolls(occupied: &HashSet<Coord>) -> usize {
         .count()
 }
 
+fn remove_accessible_rolls(occupied: &mut HashSet<Coord>) -> () {
+    let accessible: Vec<Coord> = occupied
+        .iter()
+        .copied()
+        .filter(|&(x, y)| count_adjacent_occupied(x, y, occupied) < 4)
+        .collect();
+    for coord in accessible {
+        occupied.remove(&coord);
+    }
+}
+
 fn main() {
     let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
     let mut buffer = String::new();
@@ -55,11 +66,17 @@ fn main() {
         .read_to_string(&mut buffer)
         .unwrap();
 
-    let occupied = parse_grid(&buffer);
+    let mut occupied = parse_grid(&buffer);
 
-    let count_accessible = count_accessible_rolls(&occupied);
+    let mut count_accessible = count_accessible_rolls(&occupied);
+    while count_accessible_rolls(&occupied) != 0 {
+        remove_accessible_rolls(&mut occupied);
+        count_accessible += count_accessible_rolls(&occupied);
+    }
 
-    println!("Accessible points: {count_accessible}");
+    println!(
+        "Total accessible points (includes ones accessible only after removing first): {count_accessible}"
+    );
 }
 
 #[cfg(test)]
