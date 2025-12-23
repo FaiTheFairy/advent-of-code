@@ -56,10 +56,10 @@ fn merge_ranges(raw_ranges: &[(usize, usize)]) -> Vec<(usize, usize)> {
     let mut sorted_ranges = raw_ranges.to_owned();
 
     // sort ranges in ascending order of start of each range
-    sorted_ranges.sort_unstable_by_key(|(start1, _end1)| *start1);
+    sorted_ranges.sort_unstable_by_key(|(start, _end)| *start);
 
     let &(mut start, mut end) = &sorted_ranges[0];
-    for &(next_start, next_end) in &sorted_ranges {
+    for &(next_start, next_end) in &sorted_ranges[1..] {
         // check if next_start..next_end has overlap with start..end
         if next_start <= end {
             // extend end
@@ -80,19 +80,23 @@ fn main() {
     let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
     let input = fs::read_to_string(filename).unwrap();
     let (fresh_ranges, available_ids) = parse_input(&input);
-    // println!("Fresh: {fresh_ranges:?}");
-    // println!("Available: {available_ids:?}");
-    let mut count_fresh_available: usize = 0;
+    let mut count_fresh_available = 0usize;
+    let mut count_fresh_total = 0usize;
     let fresh_ranges_merged = merge_ranges(&fresh_ranges);
 
     for (start, end) in fresh_ranges_merged {
+        // check each id if it is within this range
         for id in &available_ids {
             if (start..=end).contains(id) {
                 count_fresh_available += 1;
             }
         }
+
+        // add number of fresh ingredients in this range to the count
+        count_fresh_total += end - start + 1;
     }
-    println!("Number of available ingredient IDs that are fresh = {count_fresh_available}");
+    println!("Part 1. Number of available ingredient IDs that are fresh = {count_fresh_available}");
+    println!("Part 2. Total number of fresh ingredients = {count_fresh_total}");
 }
 
 #[cfg(test)]
