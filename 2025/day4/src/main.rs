@@ -25,11 +25,13 @@ fn count_adjacent_occupied(x: usize, y: usize, occupied: &HashSet<Coord>) -> usi
                 continue;
             }
 
-            let nx = x as i32 + dx;
-            let ny = y as i32 + dy;
+            let new_x = x as i32 + dx;
+            let new_y = y as i32 + dy;
 
-            if nx >= 0 && ny >= 0 {
-                let coord = (nx as usize, ny as usize);
+            // make sure coords we're checking are positive, since negative implies out
+            // of bounds.
+            if new_x >= 0 && new_y >= 0 {
+                let coord = (new_x as usize, new_y as usize);
                 if occupied.contains(&coord) {
                     count += 1;
                 }
@@ -59,16 +61,19 @@ fn remove_accessible_rolls(occupied: &mut HashSet<Coord>) -> () {
 }
 
 fn main() {
+    // open file and parse occupied positions into grid
     let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
     let mut buffer = String::new();
     File::open(filename)
-        .expect("Cannot open file")
+        .unwrap()
         .read_to_string(&mut buffer)
         .unwrap();
 
     let mut occupied = parse_grid(&buffer);
 
+    // recursively finds accessible paper rolls and removes them, while counting how many have been removed
     let mut count_accessible = count_accessible_rolls(&occupied);
+
     while count_accessible_rolls(&occupied) != 0 {
         remove_accessible_rolls(&mut occupied);
         count_accessible += count_accessible_rolls(&occupied);
@@ -96,37 +101,36 @@ mod tests {
 
     #[test]
     fn parse_counts_occupied_cells() {
-        let occ = parse_grid(SAMPLE);
-        // sanity check: should be less than 100 and > 0
-        assert!(occ.len() > 0);
-        assert!(occ.len() < 100);
+        let occupied = parse_grid(SAMPLE);
+        // should be less than 100 and > 0
+        assert!(occupied.len() > 0);
+        assert!(occupied.len() < 100);
     }
 
     #[test]
     fn adjacent_count_ignores_self() {
-        let occ = parse_grid("@");
-        assert_eq!(count_adjacent_occupied(0, 0, &occ), 0);
+        let occupied = parse_grid("@");
+        assert_eq!(count_adjacent_occupied(0, 0, &occupied), 0);
     }
 
     #[test]
     fn adjacent_count_uses_eight_neighbors() {
-        let occ = parse_grid(
+        let occupied = parse_grid(
             "@@@
 @@@
 @@@",
         );
         // center has 8 neighbors occupied
-        assert_eq!(count_adjacent_occupied(1, 1, &occ), 8);
+        assert_eq!(count_adjacent_occupied(1, 1, &occupied), 8);
         // corner has 3 neighbors occupied
-        assert_eq!(count_adjacent_occupied(0, 0, &occ), 3);
+        assert_eq!(count_adjacent_occupied(0, 0, &occupied), 3);
     }
 
     #[test]
     fn accessible_rolls_in_sample_grid() {
-        let occ = parse_grid(SAMPLE);
-        let accessible = count_accessible_rolls(&occ);
+        let occupied = parse_grid(SAMPLE);
+        let accessible = count_accessible_rolls(&occupied);
 
-        // This is the number you said you expect for this sample.
         assert_eq!(accessible, 13);
     }
 }
