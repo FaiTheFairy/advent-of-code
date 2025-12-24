@@ -1,0 +1,11 @@
+use std::{fs, path::PathBuf};
+
+use day7::{count_splits, parse_input};
+
+fn main() {
+    let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
+    let input = fs::read_to_string(filename).expect("Unable to open file");
+    let grid = parse_input(&input);
+    let count = count_splits(&grid);
+    println!("Part 1. The number of splits the beam goes through = {count}");
+}
