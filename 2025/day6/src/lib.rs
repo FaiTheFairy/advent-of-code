@@ -41,6 +41,43 @@ pub fn parse_input(input: &str) -> Vec<(Vec<usize>, Operation)> {
     out
 }
 
+pub fn parse_input_rtl(input: &str) -> Vec<(Vec<usize>, Operation)> {
+    let mut row_0: Vec<usize> = vec![];
+    let mut row_1: Vec<usize> = vec![];
+    let mut row_2: Vec<usize> = vec![];
+    let mut row_3: Vec<usize> = vec![];
+    let mut operands = vec![];
+
+    for (idx, line) in input.lines().enumerate() {
+        for value in line.split_whitespace() {
+            match idx {
+                0 => row_0.push(value.parse().unwrap()),
+                1 => row_1.push(value.parse().unwrap()),
+                2 => row_2.push(value.parse().unwrap()),
+                3 => row_3.push(value.parse().unwrap()),
+                4 => match value.trim() {
+                    "+" => operands.push(Operation::Addition),
+                    "*" => operands.push(Operation::Multiplication),
+                    _ => panic!("Invalid operator \"{}\"!", value.trim()),
+                },
+                _ => panic!("Only 4 rows valid!"),
+            }
+        }
+    }
+
+    let mut out: Vec<(Vec<usize>, Operation)> = vec![];
+    for ((((num1, num2), num3), num4), operand) in row_0
+        .iter()
+        .zip(&row_1)
+        .zip(&row_2)
+        .zip(&row_3)
+        .zip(&operands)
+    {
+        out.push((vec![*num1, *num2, *num3, *num4], *operand));
+    }
+    out
+}
+
 pub fn calculate_columns(columns: Vec<(Vec<usize>, Operation)>) -> Vec<usize> {
     let mut out: Vec<usize> = vec![];
     for column in columns {
@@ -72,8 +109,11 @@ pub fn calculate_sum_of_results(results: Vec<usize>) -> usize {
 mod tests {
     use super::*;
     const EXAMPLE: &str = "1 2 3\n1 2 3\n1 2 3\n1 2 3\n+ * *";
-    const EXAMPLE_PART1: &str =
-        "123 328  51 64 \n 45 64  387 23 \n  6 98  215 314\n 1 0 1 0 \n*   +   *   + ";
+    const EXAMPLE_PART1: &str = "123 328  51 64
+         45  64  387 23
+          6  98  215 314
+          1   0   1     0
+         *   +   *   +   ";
     #[test]
     fn test_parse_input_simple() {
         let expected = vec![
@@ -94,6 +134,18 @@ mod tests {
             (vec![64, 23, 314, 0], Operation::Addition),
         ];
         let result = parse_input(EXAMPLE_PART1);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_input_rtl_part1() {
+        let expected = vec![
+            (vec![14, 2561, 3], Operation::Multiplication),
+            (vec![369, 2480, 8], Operation::Addition),
+            (vec![32, 5811, 175], Operation::Multiplication),
+            (vec![623, 431, 4, 0], Operation::Addition),
+        ];
+        let result = parse_input_rtl(EXAMPLE_PART1);
         assert_eq!(result, expected);
     }
 
