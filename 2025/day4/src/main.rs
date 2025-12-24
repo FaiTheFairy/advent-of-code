@@ -73,6 +73,7 @@ fn main() {
 
     // recursively finds accessible paper rolls and removes them, while counting how many have been removed
     let mut count_accessible = count_accessible_rolls(&occupied);
+    println!("Part 1. Accesible paper rolls = {count_accessible}");
 
     while count_accessible_rolls(&occupied) != 0 {
         remove_accessible_rolls(&mut occupied);
@@ -80,7 +81,7 @@ fn main() {
     }
 
     println!(
-        "Total accessible points (includes ones accessible only after removing first): {count_accessible}"
+        "Part 2. Total accessible points (includes ones accessible only after removing first): {count_accessible}"
     );
 }
 
