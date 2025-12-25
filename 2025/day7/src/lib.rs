@@ -1,4 +1,7 @@
-use std::{collections::HashSet, mem::swap};
+use std::{
+    collections::{HashMap, HashSet},
+    mem::swap,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Cell {
@@ -73,6 +76,67 @@ pub fn count_splits(grid: &[Vec<Cell>]) -> usize {
     split_count
 }
 
+pub fn count_quantum_paths(grid: &[Vec<Cell>]) -> u128 {
+    let rows = grid.len();
+    let cols = grid.first().map(|r| r.len()).unwrap_or(0);
+
+    // HashMap stores the number of distinct paths (ways) that place the beam
+    // at the cell with coordinates (usize, usize).
+    // so active[(r,c)] = number of distinct paths whose beam is currently at (r,c)
+    let mut active: HashMap<(usize, usize), u128> = HashMap::new();
+    let mut next: HashMap<(usize, usize), u128> = HashMap::new();
+
+    // seed at S and set ways = 1
+    for (r, row) in grid.iter().enumerate() {
+        for (c, cell) in row.iter().enumerate() {
+            if *cell == Cell::Source {
+                active.insert((r, c), 1);
+            }
+        }
+    }
+
+    // Total number of complete paths that leave the grid (fall past bottom)
+    let mut total_paths = 0u128;
+
+    while !active.is_empty() {
+        next.clear();
+
+        for (&(r, c), &ways) in active.iter() {
+            let r1 = r + 1;
+
+            // if the beam would move beyond the bottom, this path terminates sucessfuly
+            if r1 >= rows {
+                total_paths += ways;
+                continue;
+            }
+
+            match grid[r][c] {
+                // each path branches into TWO possible continuations
+                Cell::Splitter => {
+                    if c > 0 {
+                        let dest = (r1, c - 1);
+                        *next.entry(dest).or_insert(0) += ways;
+                    }
+                    if c + 1 < cols {
+                        let dest = (r1, c + 1);
+                        *next.entry(dest).or_insert(0) += ways;
+                    }
+                }
+                // Normal cell: beam goes straight down
+                _ => {
+                    let dest = (r1, c);
+                    *next.entry(dest).or_insert(0) += ways;
+                }
+            }
+        }
+
+        // swap maps for next iteration (tick) of the loop
+        swap(&mut active, &mut next);
+    }
+
+    total_paths
+}
+
 #[cfg(test)]
 mod tests {
     use super::Cell::*;
@@ -101,6 +165,13 @@ mod tests {
     fn test_count_splits() {
         let expected = 3;
         let result = count_splits(&parse_input(EXAMPLE));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_count_quantum_paths() {
+        let expected = 4;
+        let result = count_quantum_paths(&parse_input(EXAMPLE));
         assert_eq!(result, expected);
     }
 }
