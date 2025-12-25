@@ -1,10 +1,10 @@
 #[derive(Debug, PartialEq)]
-struct Point {
+pub struct Point {
     x: i64,
     y: i64,
 }
 
-fn parse_input(input: &str) -> Vec<Point> {
+pub fn parse_input(input: &str) -> Vec<Point> {
     let mut points: Vec<Point> = vec![];
     for line in input.lines() {
         let mut iterator = line.splitn(2, ',');
@@ -15,7 +15,7 @@ fn parse_input(input: &str) -> Vec<Point> {
     points
 }
 
-fn max_area(points: &[Point]) -> i64 {
+pub fn max_area(points: &[Point]) -> i64 {
     let mut max_area = 0;
     for i in 0..points.len() {
         for j in (i + 1)..points.len() {
