@@ -80,6 +80,18 @@ fn count_paths_from_node(
     total_paths_from_current
 }
 
+pub fn count_paths_through_dac_and_fft(graph: &Graph) -> u64 {
+    let a = count_paths(graph, "svr", "dac")
+        .saturating_mul(count_paths(graph, "dac", "fft"))
+        .saturating_mul(count_paths(graph, "fft", "out"));
+
+    let b = count_paths(graph, "svr", "fft")
+        .saturating_mul(count_paths(graph, "fft", "dac"))
+        .saturating_mul(count_paths(graph, "dac", "out"));
+
+    a.saturating_add(b)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
