@@ -65,10 +65,19 @@ pub fn can_make_target(nums: &[u64], target: u64) -> bool {
 
         let x = nums[idx];
 
-        dfs(nums, target, idx + 1, acc + x) || dfs(nums, target, idx + 1, acc * x)
+        dfs(nums, target, idx + 1, acc + x)
+            || dfs(nums, target, idx + 1, acc * x)
+            || dfs(nums, target, idx + 1, concatenate(acc, x))
     }
 
     dfs(nums, target, 1, nums[0])
+}
+
+fn concatenate(a: u64, b: u64) -> u64 {
+    let digits_b = b.ilog10() + 1;
+
+    // shift 'a' left by the number of digits in 'b' then add 'b'
+    a * 10u64.pow(digits_b) + b
 }
 
 #[allow(dead_code)]
@@ -163,8 +172,8 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_part1() {
+    fn test_solve_part2() {
         let equations = parse_input(EXAMPLE);
-        assert_eq!(total_calibration(&equations), 3749u64);
+        assert_eq!(total_calibration(&equations), 11387u64);
     }
 }
