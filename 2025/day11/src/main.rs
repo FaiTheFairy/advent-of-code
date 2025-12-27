@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use day11::{Graph, count_paths, count_paths_through_dac_and_fft, parse_input};
+use day11::{count_paths, count_paths_through_dac_and_fft, parse_input};
 
 fn main() {
     let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("input.txt");
