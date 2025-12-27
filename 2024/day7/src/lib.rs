@@ -27,7 +27,33 @@ pub fn parse_input(input: &str) -> Vec<Equation> {
     equations
 }
 
-fn can_make_target(nums: &[u64], target: u64) -> bool {
+/// Determines whether a sequence of numbers can be combined (left-to-right)
+/// using only addition (`+`) and multiplication (`*`) to produce a target value.
+///
+/// This function explores all possible combinations of operators.
+/// At each step, it tries:
+/// - adding the next number
+/// - multiplying by the next number
+///
+/// Because all numbers are positive, any partial result that exceeds the
+/// target can be safely pruned early.
+///
+/// # Arguments
+/// * `nums` - The numbers on the right-hand side of the equation, in order.
+/// * `target` - The test value on the left-hand side of the equation.
+///
+/// # Returns
+/// * `true` if at least one combination of `+` and `*` produces `target`
+/// * `false` otherwise
+///
+/// # Examples
+/// ```
+/// use day7::can_make_target;
+/// assert!(can_make_target(&[10, 19], 190));      // 10 * 19
+/// assert!(can_make_target(&[11, 6, 16, 20], 292)); // 11 + 6 * 16 + 20
+/// assert!(!can_make_target(&[17, 5], 83));
+/// ```
+pub fn can_make_target(nums: &[u64], target: u64) -> bool {
     fn dfs(nums: &[u64], target: u64, idx: usize, acc: u64) -> bool {
         if idx == nums.len() {
             return acc == target;
