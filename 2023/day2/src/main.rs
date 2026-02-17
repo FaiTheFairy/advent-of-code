@@ -25,29 +25,53 @@ struct Set {
 }
 
 impl Set {
+    fn parse(set: &str) -> Set {
+        let cubes = set.split(',');
+        let (mut r, mut g, mut b) = (0, 0, 0);
+        for cube in cubes {
+            let (num, color) = cube
+                .trim()
+                .split_once(" ")
+                .expect("cube not in proper formatting");
+            let num = num.parse::<u32>().expect("Couldn't parse number");
+            match color {
+                "red" => r = num,
+                "green" => g = num,
+                "blue" => b = num,
+                _ => panic!("Unknown color: {color}"),
+            }
+        }
+
+        Set {
+            red: r,
+            green: g,
+            blue: b,
+        }
+    }
     fn is_valid(&self) -> bool {
         self.red <= RED_CUBES && self.green <= GREEN_CUBES && self.blue <= BLUE_CUBES
     }
 }
 
 impl Game {
+    fn parse(game: &str) -> Game {
+        let (game_id, rest) = game.split_once(':').expect("No colon found for game.");
+        let id = game_id.strip_prefix("Game ").unwrap().parse().unwrap();
+
+        let sets: Vec<Set> = rest.split(';').map(Set::parse).collect();
+
+        Game { id, sets }
+    }
+
     fn is_valid(&self) -> bool {
         self.sets.iter().all(Set::is_valid)
     }
 
     fn min_set_of_cubes(&self) -> Set {
-        let mut min_r = 0;
-        let mut min_g = 0;
-        let mut min_b = 0;
-        for set in &self.sets {
-            min_r = min_r.max(set.red);
-            min_g = min_g.max(set.green);
-            min_b = min_b.max(set.blue);
-        }
         Set {
-            red: min_r,
-            green: min_g,
-            blue: min_b,
+            red: self.sets.iter().map(|s| s.red).max().unwrap_or(0),
+            green: self.sets.iter().map(|s| s.green).max().unwrap_or(0),
+            blue: self.sets.iter().map(|s| s.blue).max().unwrap_or(0),
         }
     }
 }
@@ -55,7 +79,7 @@ impl Game {
 fn sum_part_1(input: &str) -> u32 {
     input
         .lines()
-        .map(parse_game)
+        .map(Game::parse)
         .filter(Game::is_valid)
         .map(|game| game.id)
         .sum()
@@ -64,44 +88,10 @@ fn sum_part_1(input: &str) -> u32 {
 fn sum_part_2(input: &str) -> u32 {
     input
         .lines()
-        .map(parse_game)
+        .map(Game::parse)
         .map(|game| game.min_set_of_cubes())
         .map(|set| set.red * set.green * set.blue)
         .sum()
-}
-
-fn parse_game(game: &str) -> Game {
-    let (game_id, rest) = game.split_once(':').expect("No colon found for game.");
-    let (_, id) = game_id.split_once(" ").expect("Game id has no space");
-    let id = id.parse::<u32>().unwrap();
-
-    let sets: Vec<Set> = rest.split(';').map(parse_set).collect();
-
-    Game { id, sets }
-}
-
-fn parse_set(set: &str) -> Set {
-    let cubes = set.split(',');
-    let (mut r, mut g, mut b) = (0, 0, 0);
-    for cube in cubes {
-        let (num, color) = cube
-            .trim()
-            .split_once(" ")
-            .expect("cube not in proper formatting");
-        let num = num.parse::<u32>().expect("Couldn't parse number");
-        match color {
-            "red" => r = num,
-            "green" => g = num,
-            "blue" => b = num,
-            _ => panic!("Unknown color: {color}"),
-        }
-    }
-
-    Set {
-        red: r,
-        green: g,
-        blue: b,
-    }
 }
 
 #[cfg(test)]
@@ -112,7 +102,7 @@ mod tests {
     fn test_parse_set() {
         let set = "3 blue";
         assert_eq!(
-            parse_set(set),
+            Set::parse(set),
             Set {
                 red: 0,
                 green: 0,
@@ -122,7 +112,7 @@ mod tests {
 
         let set = "1 red, 2 green, 6 blue";
         assert_eq!(
-            parse_set(set),
+            Set::parse(set),
             Set {
                 red: 1,
                 green: 2,
@@ -135,7 +125,7 @@ mod tests {
     fn test_parse_game() {
         let game = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
         assert_eq!(
-            parse_game(game),
+            Game::parse(game),
             Game {
                 id: 1,
                 sets: vec![
