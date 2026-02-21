@@ -152,15 +152,24 @@ fn strength(cards: &[Card], with_joker: bool) -> Result<Strength> {
     let mut cards_modified;
     if with_joker {
         cards_modified = cards.to_vec();
+        // Note: if all cards are jokers returns `None`.
         let card_repeated_most = card_count
             .iter()
+            // we need to exclude jokers so that the joker isn't the most repeated card.
+            // if we didn't, we may simply replace jokers with jokers.
+            // e.g.
+            // (J, 2), (K, 2)
+            // Desired behavior -> (K, 4)
+            // Unwanted, but possible, behavior -> (J, 4)
+            .filter(|&(&c, _)| c != &Card::Joker)
             .max_by(|&a, &b| a.1.cmp(b.1))
-            .map(|(&k, _v)| k)
-            .context("No maximum found")?;
+            .map(|(&k, _v)| k);
 
         for card in cards_modified.iter_mut() {
-            if card == &Card::Joker {
-                *card = *card_repeated_most
+            if let Some(most) = card_repeated_most
+                && card == &Card::Joker
+            {
+                *card = *most
             }
         }
         card_count = HashMap::new();
@@ -359,8 +368,8 @@ QQQJA 483";
                 with_joker: true,
             },
             Hand {
-                cards: vec![Ten, Five, Five, Jack, Five],
-                strength: ThreeOfKind,
+                cards: vec![Ten, Five, Five, Five, Five],
+                strength: FourOfKind,
                 bid: 684,
                 with_joker: true,
             },
