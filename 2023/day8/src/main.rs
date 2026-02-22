@@ -105,9 +105,10 @@ impl Map {
         Ok(count)
     }
 
-    fn nodes_ending_with(&self, byte: u8) -> Vec<&Node> {
+    fn nodes_ending_with(&self, byte: u8) -> Vec<Node> {
         self.instructions
             .keys()
+            .copied()
             .filter(|&n| n.ends_with(byte))
             .collect()
     }
@@ -125,8 +126,8 @@ impl Map {
                 let step = steps.next().unwrap();
                 let lr = self.leftright(node)?;
                 *node = match step {
-                    Direction::Left => &lr.0,
-                    Direction::Right => &lr.1,
+                    Direction::Left => lr.0,
+                    Direction::Right => lr.1,
                 };
                 count += 1;
             }
@@ -257,13 +258,13 @@ XXX = (XXX, XXX)";
     fn test_nodes_ending_with() {
         let map = parse_input(EXAMPLE1).unwrap();
         let result = map.nodes_ending_with(b'A');
-        let expected = vec![&Node([b'A', b'A', b'A'])];
+        let expected = vec![Node(*b"AAA")];
         assert_eq!(result, expected);
 
         let map = parse_input(EXAMPLE_PART2).unwrap();
         let mut result = map.nodes_ending_with(b'A');
         dbg!(&result);
-        let mut expected = vec![&Node([b'1', b'1', b'A']), &Node([b'2', b'2', b'A'])];
+        let mut expected = vec![Node(*b"11A"), Node(*b"22A")];
         result.sort_unstable();
         expected.sort_unstable();
         assert_eq!(result, expected);
