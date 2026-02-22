@@ -115,20 +115,26 @@ impl Map {
     fn solve_part_2(&self) -> Result<usize> {
         let mut current_nodes = self.nodes_ending_with(b'A');
         ensure!(!current_nodes.is_empty());
-        let mut steps = self.steps.iter().cycle();
-        let mut count = 0;
-        while !current_nodes.iter().all(|&n| n.ends_with(b'Z')) {
-            let step = steps.next().unwrap();
-            for node in current_nodes.iter_mut() {
-                let lr: &LeftRight = self.leftright(node)?;
+
+        let mut counts = Vec::new();
+
+        for node in current_nodes.iter_mut() {
+            let mut count = 0usize;
+            let mut steps = self.steps.iter().cycle();
+            while !node.ends_with(b'Z') {
+                let step = steps.next().unwrap();
+                let lr = self.leftright(node)?;
                 *node = match step {
                     Direction::Left => &lr.0,
                     Direction::Right => &lr.1,
                 };
+                count += 1;
             }
-            count += 1;
+            counts.push(count);
         }
-        Ok(count)
+
+        let lcm: usize = counts.into_iter().reduce(lcm_usize).unwrap();
+        Ok(lcm)
     }
 
     fn leftright(&self, node: &Node) -> Result<&LeftRight> {
@@ -136,6 +142,19 @@ impl Map {
             .get(node)
             .with_context(|| format!("missing instruction for {:?}", node))
     }
+}
+
+fn gcd_usize(mut a: usize, mut b: usize) -> usize {
+    while b != 0 {
+        let r = a % b;
+        a = b;
+        b = r;
+    }
+    a
+}
+
+fn lcm_usize(a: usize, b: usize) -> usize {
+    a / gcd_usize(a, b) * b
 }
 
 fn parse_input(input: &str) -> Result<Map> {
