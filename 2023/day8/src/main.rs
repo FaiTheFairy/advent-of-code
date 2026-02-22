@@ -10,16 +10,15 @@ const END: Node = Node([b'Z'; 3]);
 // const END: Node = Node([b'V', b'L', b'M']);
 
 fn main() -> Result<()> {
-    let soln1 = solve_part_1()?;
-    println!("Part 1. Required steps = {soln1}");
-
-    Ok(())
-}
-
-fn solve_part_1() -> Result<usize> {
     let input = fs::read_to_string("./input.txt")?;
     let map = parse_input(&input)?;
-    map.solve()
+    let soln1 = map.solve()?;
+    let soln2 = map.solve_part_2()?;
+
+    println!("Part 1. Required steps = {soln1}");
+    println!("Part 2. Required steps = {soln2}");
+
+    Ok(())
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -41,7 +40,14 @@ impl TryFrom<u8> for Direction {
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(test, derive(PartialOrd, Ord))]
 struct Node([u8; 3]);
+
+impl Node {
+    fn ends_with(&self, byte: u8) -> bool {
+        self.0[2] == byte
+    }
+}
 
 impl TryFrom<&str> for Node {
     type Error = anyhow::Error;
@@ -98,6 +104,38 @@ impl Map {
 
         Ok(count)
     }
+
+    fn nodes_ending_with(&self, byte: u8) -> Vec<&Node> {
+        self.instructions
+            .keys()
+            .filter(|&n| n.ends_with(byte))
+            .collect()
+    }
+
+    fn solve_part_2(&self) -> Result<usize> {
+        let mut current_nodes = self.nodes_ending_with(b'A');
+        ensure!(!current_nodes.is_empty());
+        let mut steps = self.steps.iter().cycle();
+        let mut count = 0;
+        while !current_nodes.iter().all(|&n| n.ends_with(b'Z')) {
+            let step = steps.next().unwrap();
+            for node in current_nodes.iter_mut() {
+                let lr: &LeftRight = self.leftright(node)?;
+                *node = match step {
+                    Direction::Left => &lr.0,
+                    Direction::Right => &lr.1,
+                };
+            }
+            count += 1;
+        }
+        Ok(count)
+    }
+
+    fn leftright(&self, node: &Node) -> Result<&LeftRight> {
+        self.instructions
+            .get(node)
+            .with_context(|| format!("missing instruction for {:?}", node))
+    }
 }
 
 fn parse_input(input: &str) -> Result<Map> {
@@ -153,6 +191,17 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)";
 
+    const EXAMPLE_PART2: &str = "LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)";
+
     use Direction::*;
 
     #[test]
@@ -182,6 +231,29 @@ ZZZ = (ZZZ, ZZZ)";
     fn test_solve_ex2() {
         let map = parse_input(EXAMPLE2).unwrap();
         let result = map.solve().unwrap();
+        assert_eq!(result, 6);
+    }
+
+    #[test]
+    fn test_nodes_ending_with() {
+        let map = parse_input(EXAMPLE1).unwrap();
+        let result = map.nodes_ending_with(b'A');
+        let expected = vec![&Node([b'A', b'A', b'A'])];
+        assert_eq!(result, expected);
+
+        let map = parse_input(EXAMPLE_PART2).unwrap();
+        let mut result = map.nodes_ending_with(b'A');
+        dbg!(&result);
+        let mut expected = vec![&Node([b'1', b'1', b'A']), &Node([b'2', b'2', b'A'])];
+        result.sort_unstable();
+        expected.sort_unstable();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_solve_part_2() {
+        let map = parse_input(EXAMPLE_PART2).unwrap();
+        let result = map.solve_part_2().unwrap();
         assert_eq!(result, 6);
     }
 }
