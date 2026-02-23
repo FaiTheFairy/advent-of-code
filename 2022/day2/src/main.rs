@@ -4,7 +4,14 @@ use std::{cmp::Ordering, str::FromStr};
 use anyhow::{Context, Result, bail};
 
 fn main() -> Result<()> {
-    println!("Hello, world!");
+    let input = std::fs::read_to_string("./input.txt")?;
+    let guide = input.parse::<Guide>()?;
+    let score = guide.score();
+    println!("Part 1. Total score upon executing the strategy guide is {score}");
+
+    let guide2 = Guide::from_str_part2(&input)?;
+    let score2 = guide2.score();
+    println!("Part 2. Total score upon executing the new strategy is {score2}");
 
     Ok(())
 }
@@ -19,6 +26,16 @@ impl FromStr for Guide {
         let entries = s
             .lines()
             .map(|l| l.parse::<GuideEntry>())
+            .collect::<Result<Vec<GuideEntry>>>()?;
+        Ok(Self(entries))
+    }
+}
+
+impl Guide {
+    fn from_str_part2(s: &str) -> Result<Self> {
+        let entries = s
+            .lines()
+            .map(GuideEntry::form_str_part2)
             .collect::<Result<Vec<GuideEntry>>>()?;
         Ok(Self(entries))
     }
@@ -48,6 +65,24 @@ impl FromStr for GuideEntry {
         // now we have opponent = "A", me = "Y"
         let opponent = opponent.parse::<Hand>()?;
         let me = me.parse::<Hand>()?;
+        Ok(Self { opponent, me })
+    }
+}
+
+impl GuideEntry {
+    fn form_str_part2(s: &str) -> Result<Self> {
+        let (opponent, me) = s
+            .trim()
+            .split_once(' ')
+            .with_context(|| format!(r#"entry not separated by space {s}"#))?;
+        let opponent = opponent.parse::<Hand>()?;
+        let me = match me {
+            "X" => opponent.beats(),
+            "Y" => opponent.draws_to(),
+            "Z" => opponent.beaten_by(),
+            _ => bail!(r#"character does not map to any action "{me}""#),
+        };
+
         Ok(Self { opponent, me })
     }
 }
@@ -105,6 +140,26 @@ impl Hand {
             _ => Outcome::Lose,
         }
     }
+
+    fn beats(&self) -> Hand {
+        match self {
+            Hand::Rock => Hand::Scissors,
+            Hand::Paper => Hand::Rock,
+            Hand::Scissors => Hand::Paper,
+        }
+    }
+
+    fn beaten_by(&self) -> Hand {
+        match self {
+            Hand::Rock => Hand::Paper,
+            Hand::Paper => Hand::Scissors,
+            Hand::Scissors => Hand::Rock,
+        }
+    }
+
+    fn draws_to(&self) -> Hand {
+        *self
+    }
 }
 
 #[cfg(test)]
@@ -113,6 +168,10 @@ mod tests {
 
     const HAND: &str = "A";
     const ENTRY: &str = "B Z";
+    const ENTRY_1: &str = "A Z";
+    const ENTRY_2: &str = "C Z";
+    const ENTRY_3: &str = "B X";
+    const ENTRY_4: &str = "B Y";
     const GUIDE: &str = "A Y
                          B X
                          C Z";
@@ -175,6 +234,22 @@ mod tests {
     }
 
     #[test]
+    fn test_hand_beats() {
+        use Hand::*;
+        assert_eq!(Rock.beats(), Scissors);
+        assert_eq!(Paper.beats(), Rock);
+        assert_eq!(Scissors.beats(), Paper);
+    }
+
+    #[test]
+    fn test_hand_beaten_by() {
+        use Hand::*;
+        assert_eq!(Rock.beaten_by(), Paper);
+        assert_eq!(Paper.beaten_by(), Scissors);
+        assert_eq!(Scissors.beaten_by(), Rock);
+    }
+
+    #[test]
     fn test_score_entry() {
         let entry = GuideEntry {
             opponent: Hand::Paper,
@@ -189,5 +264,12 @@ mod tests {
         let guide = GUIDE.parse::<Guide>().unwrap();
         let score = guide.score();
         assert_eq!(score, 15);
+    }
+
+    #[test]
+    fn test_score_guide_part_2() {
+        let guide = Guide::from_str_part2(GUIDE).unwrap();
+        let score = guide.score();
+        assert_eq!(score, 12);
     }
 }

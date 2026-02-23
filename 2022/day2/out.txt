@@ -1,0 +1,2 @@
+Part 1. Total score upon executing the strategy guide is 138103809
+Part 2. Total score upon executing the new strategy is 123172316
