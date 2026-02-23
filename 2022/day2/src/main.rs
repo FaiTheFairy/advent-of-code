@@ -24,6 +24,12 @@ impl FromStr for Guide {
     }
 }
 
+impl Guide {
+    fn score(&self) -> usize {
+        self.0.iter().map(GuideEntry::score).sum()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct GuideEntry {
     opponent: Hand,
@@ -43,6 +49,23 @@ impl FromStr for GuideEntry {
         let opponent = opponent.parse::<Hand>()?;
         let me = me.parse::<Hand>()?;
         Ok(Self { opponent, me })
+    }
+}
+
+impl GuideEntry {
+    fn score(&self) -> usize {
+        let shape_score = match self.me {
+            Hand::Rock => 1,
+            Hand::Paper => 2,
+            Hand::Scissors => 3,
+        };
+        let win_score = match self.me.play(&self.opponent) {
+            Outcome::Win => 6,
+            Outcome::Draw => 3,
+            Outcome::Lose => 0,
+        };
+
+        shape_score + win_score
     }
 }
 
@@ -66,6 +89,7 @@ impl FromStr for Hand {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Outcome {
     Win,
     Draw,
@@ -73,9 +97,9 @@ enum Outcome {
 }
 
 impl Hand {
-    fn play(&self, other: &Hand) -> Outcome {
+    fn play(&self, against: &Hand) -> Outcome {
         use Hand::*;
-        match (self, other) {
+        match (self, against) {
             (a, b) if a == b => Outcome::Draw,
             (Scissors, Paper) | (Paper, Rock) | (Rock, Scissors) => Outcome::Win,
             _ => Outcome::Lose,
@@ -99,6 +123,7 @@ mod tests {
         let expected = Hand::Rock;
         assert_eq!(result, expected);
     }
+
     #[test]
     fn test_parse_entry() {
         let result = ENTRY.parse::<GuideEntry>().unwrap();
@@ -108,6 +133,7 @@ mod tests {
         };
         assert_eq!(result, expected);
     }
+
     #[test]
     fn test_parse_guide() {
         let result = GUIDE.parse::<Guide>().unwrap();
@@ -126,5 +152,42 @@ mod tests {
             },
         ]);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_hand_play() {
+        use Outcome::{Draw, Lose, Win};
+
+        let rock = Hand::Rock;
+        let paper = Hand::Paper;
+        let scissors = Hand::Scissors;
+
+        assert_eq!(rock.play(&paper), Lose);
+        assert_eq!(rock.play(&scissors), Win);
+
+        assert_eq!(paper.play(&scissors), Lose);
+        assert_eq!(paper.play(&rock), Win);
+
+        assert_eq!(scissors.play(&paper), Win);
+        assert_eq!(scissors.play(&rock), Lose);
+
+        assert_eq!(rock.play(&rock), Draw);
+    }
+
+    #[test]
+    fn test_score_entry() {
+        let entry = GuideEntry {
+            opponent: Hand::Paper,
+            me: Hand::Scissors,
+        };
+        let result = entry.score();
+        assert_eq!(result, 9);
+    }
+
+    #[test]
+    fn test_score_guide() {
+        let guide = GUIDE.parse::<Guide>().unwrap();
+        let score = guide.score();
+        assert_eq!(score, 15);
     }
 }
