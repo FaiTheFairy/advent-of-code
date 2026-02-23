@@ -99,4 +99,32 @@ mod tests {
         let expected = Hand::Rock;
         assert_eq!(result, expected);
     }
+    #[test]
+    fn test_parse_entry() {
+        let result = ENTRY.parse::<GuideEntry>().unwrap();
+        let expected = GuideEntry {
+            opponent: Hand::Paper,
+            me: Hand::Scissors,
+        };
+        assert_eq!(result, expected);
+    }
+    #[test]
+    fn test_parse_guide() {
+        let result = GUIDE.parse::<Guide>().unwrap();
+        let expected = Guide(vec![
+            GuideEntry {
+                opponent: Hand::Rock,
+                me: Hand::Paper,
+            },
+            GuideEntry {
+                opponent: Hand::Paper,
+                me: Hand::Rock,
+            },
+            GuideEntry {
+                opponent: Hand::Scissors,
+                me: Hand::Scissors,
+            },
+        ]);
+        assert_eq!(result, expected);
+    }
 }
