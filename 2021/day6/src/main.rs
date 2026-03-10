@@ -31,14 +31,11 @@ impl FishSchool {
     }
 
     fn pass_day(&mut self) {
-        let count_zero = self.count[0];
-        self.count[0] = 0;
-        for i in 0..8 {
-            self.count[i] += self.count[i + 1];
-            self.count[i + 1] = 0;
-        }
-        self.count[6] += count_zero;
-        self.count[8] += count_zero;
+        let zeros = self.count[0];
+        // This rotation means that all zeros producea fish at idx 8.
+        // so we only need to reset them to six afterwards.
+        self.count.rotate_left(1);
+        self.count[6] += zeros
     }
 
     fn count(&self) -> usize {
@@ -51,14 +48,11 @@ impl FromStr for FishSchool {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut out = Self::default();
-        let fish = s
-            .trim()
-            .split(',')
-            .map(|d| d.parse::<usize>())
-            .collect::<Result<Vec<_>, _>>()?;
 
-        for i in 0..=8 {
-            out.count[i] += fish.iter().filter(|&d| *d == i).count()
+        for timer in s.trim().split(',').map(str::parse::<usize>) {
+            let timer = timer?;
+            anyhow::ensure!(timer <= 8, "invalid fish timer: {timer}");
+            out.count[timer] += 1;
         }
 
         Ok(out)
