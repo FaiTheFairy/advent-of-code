@@ -17,32 +17,14 @@ fn main() -> Result<()> {
 struct CrabSwarm(Vec<Crab>);
 
 impl CrabSwarm {
-    fn cost_of_moving_to(&self, position: usize) -> usize {
-        self.0.iter().map(|c| c.cost_of_moving_to(position)).sum()
-    }
-
-    fn cost_of_moving_to_v2(&self, position: usize) -> usize {
-        self.0
-            .iter()
-            .map(|c| c.cost_of_moving_to_v2(position))
-            .sum()
-    }
-
     fn cost_of_cheapest_move(&self) -> Result<usize> {
-        let max = self
-            .0
-            .iter()
-            .map(|c| c.horizontal)
-            .max()
-            .context("empty positions")?;
-
-        let mut ideal = self.cost_of_moving_to(max);
-        for i in 0..max {
-            ideal = ideal.min(self.cost_of_moving_to(i));
-        }
-        Ok(ideal)
+        self.cheapest_cost_by(Crab::cost_of_moving_to)
     }
     fn cost_of_cheapest_move_v2(&self) -> Result<usize> {
+        self.cheapest_cost_by(Crab::cost_of_moving_to_v2)
+    }
+
+    fn cheapest_cost_by(&self, f: impl Fn(&Crab, usize) -> usize) -> Result<usize> {
         let max = self
             .0
             .iter()
@@ -50,11 +32,10 @@ impl CrabSwarm {
             .max()
             .context("empty positions")?;
 
-        let mut ideal = self.cost_of_moving_to_v2(max);
-        for i in 0..max {
-            ideal = ideal.min(self.cost_of_moving_to_v2(i));
-        }
-        Ok(ideal)
+        (0..=max)
+            .map(|target| self.0.iter().map(|c| f(c, target)).sum())
+            .min()
+            .context("empty positions")
     }
 }
 
@@ -62,13 +43,14 @@ impl FromStr for CrabSwarm {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(
-            s.trim()
-                .split(',')
-                .flat_map(|d| d.parse::<usize>())
-                .map(|d| Crab { horizontal: d })
-                .collect::<Vec<Crab>>(),
-        ))
+        let crabs = s
+            .trim()
+            .split(',')
+            .map(str::parse::<usize>)
+            .map(|r| r.map(|h| Crab { horizontal: h }))
+            .collect::<Result<Vec<Crab>, _>>()?;
+
+        Ok(Self(crabs))
     }
 }
 
@@ -83,7 +65,11 @@ impl Crab {
     }
 
     fn cost_of_moving_to_v2(&self, position: usize) -> usize {
-        (1..=self.horizontal.abs_diff(position)).sum()
+        // naive solution:
+        // (1..=self.horizontal.abs_diff(position)).sum()
+        // solution using triangular number formula
+        let n = self.horizontal.abs_diff(position);
+        n * (n + 1) / 2
     }
 }
 
@@ -118,12 +104,6 @@ mod tests {
     }
 
     #[test]
-    fn test_swarm_cost_of_moving() {
-        let result = EXAMPLE.parse::<CrabSwarm>().unwrap().cost_of_moving_to(2);
-        assert_eq!(result, 37);
-    }
-
-    #[test]
     fn test_swarm_least_fuel() {
         let result = EXAMPLE
             .parse::<CrabSwarm>()
@@ -137,15 +117,6 @@ mod tests {
     fn test_crab_cost_of_moving_v2() {
         let result = Crab { horizontal: 16 }.cost_of_moving_to_v2(5);
         assert_eq!(result, 66)
-    }
-
-    #[test]
-    fn test_swarm_cost_of_moving_v2() {
-        let result = EXAMPLE
-            .parse::<CrabSwarm>()
-            .unwrap()
-            .cost_of_moving_to_v2(2);
-        assert_eq!(result, 206);
     }
 
     #[test]
