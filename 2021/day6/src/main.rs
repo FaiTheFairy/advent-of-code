@@ -20,7 +20,7 @@ fn main() -> Result<()> {
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct FishSchool {
-    count: [usize; 9],
+    timers: [usize; 9],
 }
 
 impl FishSchool {
@@ -31,15 +31,15 @@ impl FishSchool {
     }
 
     fn pass_day(&mut self) {
-        let zeros = self.count[0];
+        let zeros = self.timers[0];
         // This rotation means that all zeros producea fish at idx 8.
         // so we only need to reset them to six afterwards.
-        self.count.rotate_left(1);
-        self.count[6] += zeros
+        self.timers.rotate_left(1);
+        self.timers[6] += zeros
     }
 
     fn count(&self) -> usize {
-        self.count.iter().sum()
+        self.timers.iter().sum()
     }
 }
 
@@ -52,7 +52,7 @@ impl FromStr for FishSchool {
         for timer in s.trim().split(',').map(str::parse::<usize>) {
             let timer = timer?;
             anyhow::ensure!(timer <= 8, "invalid fish timer: {timer}");
-            out.count[timer] += 1;
+            out.timers[timer] += 1;
         }
 
         Ok(out)
@@ -69,7 +69,7 @@ mod tests {
     fn test_parse_fish_school() {
         let result = EXAMPLE.parse::<FishSchool>().unwrap();
         let expected = FishSchool {
-            count: [0, 1, 1, 2, 1, 0, 0, 0, 0],
+            timers: [0, 1, 1, 2, 1, 0, 0, 0, 0],
         };
 
         assert_eq!(result, expected);
@@ -80,13 +80,13 @@ mod tests {
         let mut school = EXAMPLE.parse::<FishSchool>().unwrap();
         school.pass_day();
         let expected_day1 = FishSchool {
-            count: [1, 1, 2, 1, 0, 0, 0, 0, 0],
+            timers: [1, 1, 2, 1, 0, 0, 0, 0, 0],
         };
         assert_eq!(school, expected_day1);
 
         school.pass_day();
         let expected_day2 = FishSchool {
-            count: [1, 2, 1, 0, 0, 0, 1, 0, 1],
+            timers: [1, 2, 1, 0, 0, 0, 1, 0, 1],
         };
         assert_eq!(school, expected_day2);
     }
@@ -102,5 +102,12 @@ mod tests {
         school.pass_days(80 - 18);
         let result80 = school.count();
         assert_eq!(result80, 5934);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let mut school = EXAMPLE.parse::<FishSchool>().unwrap();
+        school.pass_days(256);
+        assert_eq!(school.count(), 26984457539);
     }
 }
