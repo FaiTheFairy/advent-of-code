@@ -5,7 +5,11 @@ use anyhow::{Context, bail};
 fn main() -> anyhow::Result<()> {
     let input = fs::read_to_string("input.txt")?;
     let sol1 = solve_part_1(&input);
-    println!("Part 1. Product of final horizonatl position and depth is {sol1}");
+    println!("Part 1. Product of final horizontal position and depth is {sol1}");
+
+    let sol2 = solve_part_2(&input);
+    println!("Part 2. Product of final horizontal position and depth is {sol2}");
+
     Ok(())
 }
 
@@ -14,6 +18,15 @@ fn solve_part_1(commands: &str) -> isize {
     let commands = parse_commands_to_vec(commands);
     for command in commands {
         position.apply_move(command);
+    }
+    position.x * position.z
+}
+
+fn solve_part_2(commands: &str) -> isize {
+    let mut position = Position::default();
+    let commands = parse_commands_to_vec(commands);
+    for command in commands {
+        position.apply_move_2(command);
     }
     position.x * position.z
 }
@@ -27,18 +40,31 @@ struct Position {
 
 impl Position {
     fn apply_move(&mut self, command: Command) {
-        dbg!(&self);
+        match command {
+            Command::Forward(unit) => {
+                self.x += unit as isize;
+                // self.z += self.aim * unit as isize;
+            }
+            Command::Down(unit) => {
+                self.z += unit as isize;
+            }
+            Command::Up(unit) => {
+                self.z -= unit as isize;
+            }
+        }
+    }
+
+    /// Applies move per part 2 rules (aim-based)
+    fn apply_move_2(&mut self, command: Command) {
         match command {
             Command::Forward(unit) => {
                 self.x += unit as isize;
                 self.z += self.aim * unit as isize;
             }
             Command::Down(unit) => {
-                // self.z += unit as isize;
                 self.aim += unit as isize;
             }
             Command::Up(unit) => {
-                // self.z -= unit as isize;
                 self.aim -= unit as isize;
             }
         }
