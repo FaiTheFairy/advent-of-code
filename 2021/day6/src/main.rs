@@ -1,5 +1,4 @@
 use anyhow::Result;
-use rayon::prelude::*;
 use std::{fs, str::FromStr};
 
 fn main() -> Result<()> {
@@ -19,39 +18,31 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct FishSchool {
-    fish: Vec<Lanternfish>,
+    count: [usize; 9],
 }
 
 impl FishSchool {
     fn pass_days(&mut self, days: usize) {
         for _ in 0..days {
-            // dbg!(&self);
             self.pass_day();
         }
     }
 
     fn pass_day(&mut self) {
-        let count = self
-            .fish
-            // .iter()
-            .par_iter()
-            .filter(|&fish| fish.internal_timer == 0)
-            .count();
-        // need to parallelize this?
-        // for fish in self.fish.iter_mut() {
-        //     fish.pass_day();
-        // }
-        self.fish.par_iter_mut().for_each(|f| f.pass_day());
-        for _ in 0..count {
-            // dbg!(&self.fish);
-            self.fish.push(Lanternfish { internal_timer: 8 });
+        let count_zero = self.count[0];
+        self.count[0] = 0;
+        for i in 0..8 {
+            self.count[i] += self.count[i + 1];
+            self.count[i + 1] = 0;
         }
+        self.count[6] += count_zero;
+        self.count[8] += count_zero;
     }
 
     fn count(&self) -> usize {
-        self.fish.len()
+        self.count.iter().sum()
     }
 }
 
@@ -59,31 +50,18 @@ impl FromStr for FishSchool {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut out = Self::default();
         let fish = s
             .trim()
             .split(',')
-            // .map(|d| dbg!(d))
-            .map(|d| d.parse::<u8>())
-            .collect::<Result<Vec<_>, _>>()?
-            .iter()
-            .map(|d| Lanternfish { internal_timer: *d })
-            .collect::<Vec<_>>();
-        Ok(FishSchool { fish })
-    }
-}
+            .map(|d| d.parse::<usize>())
+            .collect::<Result<Vec<_>, _>>()?;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Lanternfish {
-    internal_timer: u8,
-}
-
-impl Lanternfish {
-    fn pass_day(&mut self) {
-        if self.internal_timer == 0 {
-            self.internal_timer = 6;
-        } else {
-            self.internal_timer -= 1;
+        for i in 0..=8 {
+            out.count[i] += fish.iter().filter(|&d| *d == i).count()
         }
+
+        Ok(out)
     }
 }
 
@@ -97,16 +75,26 @@ mod tests {
     fn test_parse_fish_school() {
         let result = EXAMPLE.parse::<FishSchool>().unwrap();
         let expected = FishSchool {
-            fish: vec![
-                Lanternfish { internal_timer: 3 },
-                Lanternfish { internal_timer: 4 },
-                Lanternfish { internal_timer: 3 },
-                Lanternfish { internal_timer: 1 },
-                Lanternfish { internal_timer: 2 },
-            ],
+            count: [0, 1, 1, 2, 1, 0, 0, 0, 0],
         };
 
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_pass_day() {
+        let mut school = EXAMPLE.parse::<FishSchool>().unwrap();
+        school.pass_day();
+        let expected_day1 = FishSchool {
+            count: [1, 1, 2, 1, 0, 0, 0, 0, 0],
+        };
+        assert_eq!(school, expected_day1);
+
+        school.pass_day();
+        let expected_day2 = FishSchool {
+            count: [1, 2, 1, 0, 0, 0, 1, 0, 1],
+        };
+        assert_eq!(school, expected_day2);
     }
 
     #[test]
