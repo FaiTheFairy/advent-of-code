@@ -40,7 +40,17 @@ struct Rules(HashMap<Bag, Contents>);
 
 impl Rules {
     fn count_total_bags_inside(&self, outer: &Bag) -> usize {
-        self.0
+        let mut memo = HashMap::new();
+        self.count_total_bags_inside_memo(outer, &mut memo)
+    }
+
+    fn count_total_bags_inside_memo(&self, outer: &Bag, memo: &mut HashMap<Bag, usize>) -> usize {
+        if let Some(result) = memo.get(outer) {
+            return *result;
+        }
+
+        let result = self
+            .0
             .get(outer)
             .map(|inners| {
                 inners
@@ -48,15 +58,35 @@ impl Rules {
                     .map(|(count, bag)| count * (1 + self.count_total_bags_inside(bag)))
                     .sum()
             })
-            .unwrap_or(0)
+            .unwrap_or(0);
+
+        memo.insert(outer.clone(), result);
+        result
     }
 
     fn can_eventually_contain(&self, outer: &Bag, target: &Bag) -> bool {
-        self.0.get(outer).is_some_and(|inners| {
-            inners
-                .iter()
-                .any(|(_, inner)| inner == target || self.can_eventually_contain(inner, target))
-        })
+        let mut memo = HashMap::new();
+        self.can_eventually_contain_memo(outer, target, &mut memo)
+    }
+
+    fn can_eventually_contain_memo(
+        &self,
+        outer: &Bag,
+        target: &Bag,
+        memo: &mut HashMap<Bag, bool>,
+    ) -> bool {
+        if let Some(result) = memo.get(outer) {
+            return *result;
+        }
+
+        let result = self.0.get(outer).is_some_and(|inners| {
+            inners.iter().any(|(_, inner)| {
+                inner == target || self.can_eventually_contain_memo(inner, target, memo)
+            })
+        });
+
+        memo.insert(outer.clone(), result);
+        result
     }
 
     fn count_possible_outer_bags(&self, target: &Bag) -> usize {
