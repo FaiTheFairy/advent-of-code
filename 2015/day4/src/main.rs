@@ -1,4 +1,4 @@
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 use anyhow::{Context, Result};
 
@@ -45,16 +45,21 @@ struct Input {
 
 impl Input {
     fn satisfies_part_1(&self) -> bool {
-        self.md5().starts_with("00000")
+        let digest = self.md5();
+        // we are looking for first 5 digits in the hexadecimal representation
+        // to be 0. a u8 is represented by two hex digits.
+        // [ high 4 bits ][ low 4 bits]
+        // and the fifth hexademical we want should start be "0?"
+        digest[0] == 0 && digest[1] == 0 && digest[2] < 0b0001_0000
     }
 
     fn satisfies_part_2(&self) -> bool {
-        self.md5().starts_with("000000")
+        let digest = self.md5();
+        digest[0] == 0 && digest[1] == 0 && digest[2] == 0
     }
 
-    fn md5(&self) -> String {
+    fn md5(&self) -> [u8; 16] {
         let input = format!("{}{}", self.key, self.answer);
-        let digest = md5::compute(input.as_bytes());
-        format!("{digest:x}")
+        md5::compute(input.as_bytes()).0
     }
 }
