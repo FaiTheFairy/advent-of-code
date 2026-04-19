@@ -1,0 +1,8 @@
+[package]
+name = "day07"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+derive_more = { version = "2.1.1", features = ["from", "display", "add", "mul", "add_assign", "sum", "as_ref", "from_str", "try_into"] }
