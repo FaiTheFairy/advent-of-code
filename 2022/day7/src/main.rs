@@ -6,11 +6,19 @@ use anyhow::Result;
 use anyhow::bail;
 use anyhow::ensure;
 
+const TOTAL_DISK_SPACE: u64 = 70_000_000;
+const UPDATE_SIZE: u64 = 30_000_000;
+
 fn main() -> Result<()> {
     let input = fs::read_to_string("./input.txt")?;
     let problem_input = input.parse::<ProblemInput>()?;
+
     let sol1 = problem_input.solve_part_1()?;
     println!("Part 1. solution = {sol1}");
+
+    let sol2 = problem_input.solve_part_2()?;
+    println!("Part 2. solution = {sol2}");
+
     Ok(())
 }
 
@@ -38,10 +46,7 @@ impl FromStr for Command {
             "ls" => Ok(Self::Ls),
             "cd /" => Ok(Self::CdRoot),
             "cd .." => Ok(Self::CdUp),
-            s if s.starts_with("cd") => {
-                let (_cd, arg) = s.split_once(" ").context("cd command has no argument.")?;
-                Ok(Self::CdDown(arg.into()))
-            }
+            s if let Some(arg) = s.strip_prefix("cd ") => Ok(Self::CdDown(arg.trim().into())),
             _ => bail!("Unknown command: {s}"),
         }
     }
@@ -64,7 +69,7 @@ impl FromStr for Listing {
             Ok(Listing::Dir(s2.into()))
         } else {
             Ok(Listing::File {
-                size: s1.parse::<u64>()?,
+                size: s1.parse::<u64>().context("parsing file size")?,
                 name: s2.into(),
             })
         }
@@ -116,6 +121,17 @@ impl ProblemInput {
     fn solve_part_1(&self) -> Result<u64> {
         let analyzer = self.ingest()?;
         Ok(analyzer.sum_dirs_at_most(100_000))
+    }
+
+    fn solve_part_2(&self) -> Result<u64> {
+        let analyzer = self.ingest()?;
+        let root_total = analyzer.root_total()?;
+        let unused_space = TOTAL_DISK_SPACE - root_total;
+        let space_needed = UPDATE_SIZE.saturating_sub(unused_space);
+
+        analyzer
+            .smallest_dir_at_least(space_needed)
+            .context("no directory has enough size")
     }
 }
 
@@ -195,6 +211,10 @@ impl Analyzer {
 
     fn sum_dirs_at_most(&self, limit: u64) -> u64 {
         self.totals.iter().copied().filter(|&t| t <= limit).sum()
+    }
+
+    fn smallest_dir_at_least(&self, needed: u64) -> Option<u64> {
+        self.totals.iter().copied().filter(|&t| t >= needed).min()
     }
 
     fn root_total(&self) -> Result<u64> {
@@ -303,6 +323,20 @@ dir d";
             .solve_part_1()
             .context("Couldn't solve part 1")?;
         assert_eq!(result, 95437);
+        Ok(())
+    }
+
+    #[test]
+    fn test_root_total() -> Result<()> {
+        let result = EXAMPLE.parse::<ProblemInput>()?.ingest()?.root_total()?;
+        assert_eq!(result, 48381165);
+        Ok(())
+    }
+
+    #[test]
+    fn test_solve_part_2() -> Result<()> {
+        let result = EXAMPLE.parse::<ProblemInput>()?.solve_part_2()?;
+        assert_eq!(result, 24933642);
         Ok(())
     }
 }
